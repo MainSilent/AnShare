@@ -1,0 +1,152 @@
+name: Android Release APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.11.0"
+          cache: npm
+
+
+      - name: Install dependencies
+        run: npm ci
+
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+
+      - name: Generate random keystore
+        working-directory: android/app
+        shell: bash
+        run: |
+          STORE_PASSWORD=$(openssl rand -hex 32)
+          KEY_PASSWORD=$(openssl rand -hex 32)
+          KEY_ALIAS=$(openssl rand -hex 16)
+
+          echo "STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+
+          keytool \
+            -genkeypair \
+            -v \
+            -keystore release.keystore \
+            -alias "$KEY_ALIAS" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "$STORE_PASSWORD" \
+            -keypass "$KEY_PASSWORD" \
+            -dname "CN=AnShare"
+
+
+      - name: Add signing properties
+        working-directory: android
+        shell: bash
+        run: |
+          cat >> gradle.properties <<EOF
+
+RELEASE_STORE_FILE=release.keystore
+RELEASE_STORE_PASSWORD=$STORE_PASSWORD
+RELEASE_KEY_ALIAS=$KEY_ALIAS
+RELEASE_KEY_PASSWORD=$KEY_PASSWORD
+
+EOF
+
+
+      - name: Patch build.gradle
+        working-directory: android/app
+        shell: bash
+        run: |
+          python3 - <<'PY'
+import re
+from pathlib import Path
+
+path = Path("build.gradle")
+text = path.read_text()
+
+
+if "RELEASE_STORE_FILE" not in text:
+
+    pattern = r"(signingConfigs\s*\{\s*debug\s*\{.*?\n\s*\})"
+
+    replacement = r"""\1
+
+        release {
+
+            storeFile file(RELEASE_STORE_FILE)
+
+            storePassword RELEASE_STORE_PASSWORD
+
+            keyAlias RELEASE_KEY_ALIAS
+
+            keyPassword RELEASE_KEY_PASSWORD
+
+        }"""
+
+    text, count = re.sub(
+        pattern,
+        replacement,
+        text,
+        flags=re.DOTALL
+    )
+
+    if count == 0:
+        raise Exception("Could not find signingConfigs block")
+
+
+text = text.replace(
+    "signingConfig signingConfigs.debug",
+    "signingConfig signingConfigs.release"
+)
+
+
+path.write_text(text)
+
+PY
+
+
+      - name: Build release APK
+        working-directory: android
+        shell: bash
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+
+      - name: Prepare APK
+        run: |
+          mkdir -p release
+
+          cp \
+          android/app/build/outputs/apk/release/app-release.apk \
+          release/AnShare.apk
+
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: manual-${{ github.run_number }}
+          name: AnShare Build ${{ github.run_number }}
+          files: |
+            release/AnShare.apk
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
