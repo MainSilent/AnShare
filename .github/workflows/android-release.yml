@@ -1,0 +1,107 @@
+name: Android Release APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.11.0"
+          cache: npm
+
+
+      - name: Install dependencies
+        run: npm ci
+
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+
+      - name: Generate keystore
+        working-directory: android/app
+        shell: bash
+        run: |
+          STORE_PASSWORD=$(openssl rand -hex 32)
+          KEY_PASSWORD=$STORE_PASSWORD
+          KEY_ALIAS=$(openssl rand -hex 16)
+
+          echo "STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+
+          keytool \
+            -genkeypair \
+            -v \
+            -keystore release.keystore \
+            -alias "$KEY_ALIAS" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "$STORE_PASSWORD" \
+            -keypass "$KEY_PASSWORD" \
+            -dname "CN=AnShare"
+
+
+      - name: Add signing properties
+        working-directory: android
+        shell: bash
+        run: |
+          printf "\nRELEASE_STORE_FILE=release.keystore\n" >> gradle.properties
+          printf "RELEASE_STORE_PASSWORD=%s\n" "$STORE_PASSWORD" >> gradle.properties
+          printf "RELEASE_KEY_ALIAS=%s\n" "$KEY_ALIAS" >> gradle.properties
+          printf "RELEASE_KEY_PASSWORD=%s\n" "$KEY_PASSWORD" >> gradle.properties
+
+
+      - name: Update release signing
+        working-directory: android/app
+        shell: bash
+        run: |
+          sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' build.gradle
+
+      - name: Verify keystore
+        working-directory: android/app
+        shell: bash
+        run: |
+          keytool -list \
+            -keystore release.keystore \
+            -storepass "$STORE_PASSWORD"
+
+      - name: Build release APK
+        working-directory: android
+        shell: bash
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+
+      - name: Prepare APK
+        shell: bash
+        run: |
+          mkdir -p release
+          cp android/app/build/outputs/apk/release/app-release.apk release/AnShare.apk
+
+
+      - name: Upload GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: manual-${{ github.run_number }}
+          name: AnShare Build ${{ github.run_number }}
+          files: |
+            release/AnShare.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
