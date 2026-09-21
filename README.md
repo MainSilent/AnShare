@@ -1,3 +1,0 @@
-# AN Share
-
-### In Progress...
