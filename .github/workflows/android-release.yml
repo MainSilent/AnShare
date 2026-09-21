@@ -60,12 +60,10 @@ jobs:
         working-directory: android
         shell: bash
         run: |
-          {
-            echo "RELEASE_STORE_FILE=release.keystore"
-            echo "RELEASE_STORE_PASSWORD=$STORE_PASSWORD"
-            echo "RELEASE_KEY_ALIAS=$KEY_ALIAS"
-            echo "RELEASE_KEY_PASSWORD=$KEY_PASSWORD"
-          } >> gradle.properties
+          printf "\nRELEASE_STORE_FILE=release.keystore\n" >> gradle.properties
+          printf "RELEASE_STORE_PASSWORD=%s\n" "$STORE_PASSWORD" >> gradle.properties
+          printf "RELEASE_KEY_ALIAS=%s\n" "$KEY_ALIAS" >> gradle.properties
+          printf "RELEASE_KEY_PASSWORD=%s\n" "$KEY_PASSWORD" >> gradle.properties
 
 
       - name: Update release signing
