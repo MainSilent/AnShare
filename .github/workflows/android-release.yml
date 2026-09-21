@@ -9,11 +9,11 @@ jobs:
 
     steps:
 
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22.11.0"
@@ -32,10 +32,12 @@ jobs:
           cache: gradle
 
 
-      - name: Generate random keystore
+      - name: Generate keystore
         working-directory: android/app
         shell: bash
         run: |
+          echo "Generating keystore"
+
           STORE_PASSWORD=$(openssl rand -hex 32)
           KEY_PASSWORD=$(openssl rand -hex 32)
           KEY_ALIAS=$(openssl rand -hex 16)
@@ -46,7 +48,6 @@ jobs:
 
           keytool \
             -genkeypair \
-            -v \
             -keystore release.keystore \
             -alias "$KEY_ALIAS" \
             -keyalg RSA \
@@ -57,43 +58,34 @@ jobs:
             -dname "CN=AnShare"
 
 
-      - name: Add signing properties
+      - name: Add Gradle properties
         working-directory: android
         shell: bash
         run: |
-          cat >> gradle.properties <<EOF
-
-RELEASE_STORE_FILE=release.keystore
-RELEASE_STORE_PASSWORD=$STORE_PASSWORD
-RELEASE_KEY_ALIAS=$KEY_ALIAS
-RELEASE_KEY_PASSWORD=$KEY_PASSWORD
-
-EOF
+          echo "RELEASE_STORE_FILE=release.keystore" >> gradle.properties
+          echo "RELEASE_STORE_PASSWORD=$STORE_PASSWORD" >> gradle.properties
+          echo "RELEASE_KEY_ALIAS=$KEY_ALIAS" >> gradle.properties
+          echo "RELEASE_KEY_PASSWORD=$KEY_PASSWORD" >> gradle.properties
 
 
-      - name: Patch build.gradle
+      - name: Patch Gradle signing
         working-directory: android/app
         shell: bash
         run: |
-          if ! grep -q "RELEASE_STORE_FILE" build.gradle; then
+          cp build.gradle build.gradle.backup
 
-            sed -i "/signingConfigs {/a\\
-\\
-        release {\\
-            storeFile file(RELEASE_STORE_FILE)\\
-            storePassword RELEASE_STORE_PASSWORD\\
-            keyAlias RELEASE_KEY_ALIAS\\
-            keyPassword RELEASE_KEY_PASSWORD\\
-        }" build.gradle
+          sed -i '/signingConfigs {/a\
+        release {\
+            storeFile file(RELEASE_STORE_FILE)\
+            storePassword RELEASE_STORE_PASSWORD\
+            keyAlias RELEASE_KEY_ALIAS\
+            keyPassword RELEASE_KEY_PASSWORD\
+        }' build.gradle
 
-          fi
-
-          sed -i \
-          "s/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/g" \
-          build.gradle
+          sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' build.gradle
 
 
-      - name: Build release APK
+      - name: Build APK
         working-directory: android
         shell: bash
         run: |
@@ -101,23 +93,19 @@ EOF
           ./gradlew assembleRelease
 
 
-      - name: Prepare APK
+      - name: Copy APK
         shell: bash
         run: |
           mkdir -p release
-
-          cp \
-          android/app/build/outputs/apk/release/app-release.apk \
-          release/AnShare.apk
+          cp android/app/build/outputs/apk/release/app-release.apk release/AnShare.apk
 
 
-      - name: Create GitHub Release
+      - name: Upload GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: manual-${{ github.run_number }}
-          name: AnShare Build ${{ github.run_number }}
+          name: AnShare Manual Build ${{ github.run_number }}
           files: |
             release/AnShare.apk
-
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
