@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AN Share</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-zinc-950 min-h-screen text-zinc-100">
+    <div class="w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        <!-- Main container -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
+            <!-- Header -->
+            <div class="p-4 sm:p-6 border-b border-zinc-800">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
+                        <h1 class="text-2xl sm:text-3xl font-bold truncate">
+                            AN Share
+                        </h1>
+
+                        <p class="text-zinc-400 text-sm mt-1">
+                            192.168.1.20:9630
+                        </p>
+                    </div>
+
+                    <form action="/upload" method="post" enctype="multipart/form-data">
+                        <label class="
+                            w-full sm:w-auto
+                            flex items-center justify-center gap-2
+                            cursor-pointer
+                            bg-blue-600 hover:bg-blue-500
+                            px-5 py-3
+                            rounded-xl
+                            transition
+                            font-medium
+                            active:scale-95
+                        ">
+                            <span>＋ Upload</span>
+                            <input 
+                                type="file" 
+                                name="file" 
+                                class="hidden" 
+                                onchange="this.form.submit()" 
+                            />
+                        </label>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Path -->
+            <div class="px-4 sm:px-6 py-3 border-b border-zinc-800 overflow-x-auto">
+                <div class="flex items-center gap-2 text-sm whitespace-nowrap text-zinc-400">
+                    <a class="hover:text-white">
+                        Home
+                    </a>
+                    <span>/</span>
+                    <a class="hover:text-white">
+                        Download
+                    </a>
+                    <span>/</span>
+                    <span class="text-white">
+                        Movies
+                    </span>
+                </div>
+            </div>
+
+            <!-- Files -->
+            <div class="
+                p-4 sm:p-6
+                grid
+                grid-cols-1
+                xs:grid-cols-2
+                md:grid-cols-3
+                lg:grid-cols-4
+                gap-3 sm:gap-4
+            ">
+                <!-- Folder -->
+                <a href="?path=/Movies" class="
+                    bg-zinc-800
+                    hover:bg-zinc-700
+                    border border-zinc-700
+                    rounded-xl
+                    p-4
+                    transition
+                    group
+                    min-w-0
+                ">
+
+                    <div class="flex items-center justify-between">
+
+                        <span class="text-3xl">
+                            📁
+                        </span>
+
+                        <span class="text-zinc-500 group-hover:text-white">
+                            →
+                        </span>
+
+                    </div>
+
+                    <h3 class="mt-4 font-medium truncate">
+                        Movies
+                    </h3>
+
+                    <p class="text-xs text-zinc-500 mt-1">
+                        Folder
+                    </p>
+                </a>
+
+                <!-- File -->
+                <a href="/download?path=/movie.mp4" class="
+                    bg-zinc-800
+                    hover:bg-zinc-700
+                    border border-zinc-700
+                    rounded-xl
+                    p-4
+                    transition
+                    group
+                    min-w-0
+                ">
+                    <div class="flex items-center justify-between">
+
+                        <span class="text-3xl">
+                            📄
+                        </span>
+
+                        <span class="text-blue-400 text-sm">
+                            Download
+                        </span>
+
+                    </div>
+
+                    <h3 class="mt-4 font-medium truncate">
+                        movie.mp4
+                    </h3>
+
+                    <p class="text-xs text-zinc-500 mt-1">
+                        1.2 GB
+                    </p>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
