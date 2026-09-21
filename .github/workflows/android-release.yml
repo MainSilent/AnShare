@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           STORE_PASSWORD=$(openssl rand -hex 32)
-          KEY_PASSWORD=$(openssl rand -hex 32)
+          KEY_PASSWORD=$STORE_PASSWORD
           KEY_ALIAS=$(openssl rand -hex 16)
 
           echo "STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
@@ -46,6 +46,7 @@ jobs:
 
           keytool \
             -genkeypair \
+            -v \
             -keystore release.keystore \
             -alias "$KEY_ALIAS" \
             -keyalg RSA \
@@ -56,7 +57,7 @@ jobs:
             -dname "CN=AnShare"
 
 
-      - name: Add signing config properties
+      - name: Add signing properties
         working-directory: android
         shell: bash
         run: |
@@ -72,6 +73,13 @@ jobs:
         run: |
           sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' build.gradle
 
+      - name: Verify keystore
+        working-directory: android/app
+        shell: bash
+        run: |
+          keytool -list \
+            -keystore release.keystore \
+            -storepass "$STORE_PASSWORD"
 
       - name: Build release APK
         working-directory: android
