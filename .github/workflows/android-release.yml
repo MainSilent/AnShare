@@ -75,52 +75,22 @@ EOF
         working-directory: android/app
         shell: bash
         run: |
-          python3 - <<'PY'
-import re
-from pathlib import Path
+          if ! grep -q "RELEASE_STORE_FILE" build.gradle; then
 
-path = Path("build.gradle")
-text = path.read_text()
+            sed -i "/signingConfigs {/a\\
+\\
+        release {\\
+            storeFile file(RELEASE_STORE_FILE)\\
+            storePassword RELEASE_STORE_PASSWORD\\
+            keyAlias RELEASE_KEY_ALIAS\\
+            keyPassword RELEASE_KEY_PASSWORD\\
+        }" build.gradle
 
+          fi
 
-if "RELEASE_STORE_FILE" not in text:
-
-    pattern = r"(signingConfigs\s*\{\s*debug\s*\{.*?\n\s*\})"
-
-    replacement = r"""\1
-
-        release {
-
-            storeFile file(RELEASE_STORE_FILE)
-
-            storePassword RELEASE_STORE_PASSWORD
-
-            keyAlias RELEASE_KEY_ALIAS
-
-            keyPassword RELEASE_KEY_PASSWORD
-
-        }"""
-
-    text, count = re.sub(
-        pattern,
-        replacement,
-        text,
-        flags=re.DOTALL
-    )
-
-    if count == 0:
-        raise Exception("Could not find signingConfigs block")
-
-
-text = text.replace(
-    "signingConfig signingConfigs.debug",
-    "signingConfig signingConfigs.release"
-)
-
-
-path.write_text(text)
-
-PY
+          sed -i \
+          "s/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/g" \
+          build.gradle
 
 
       - name: Build release APK
@@ -132,6 +102,7 @@ PY
 
 
       - name: Prepare APK
+        shell: bash
         run: |
           mkdir -p release
 
