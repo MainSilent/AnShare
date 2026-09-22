@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   StatusBar,
-  useColorScheme,
   StyleSheet,
   TouchableOpacity,
   Text,
   Linking
 } from 'react-native';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import checkPermission from './Permission';
 
 let host
 const PORT = 9630
@@ -17,12 +18,16 @@ function App() {
   const [server, setServer] = useState(0)
   const [ isWifi, setWifi ] = useState(false)
 
+  async function connect() {
+    const perm = await checkPermission()
+  }
+
   return (
     <SafeAreaProvider style={styles.container}>
       <StatusBar barStyle={'dark-content'} />
 
       <TouchableOpacity
-        // onPress={() => connect()}
+        onPress={() => connect()}
         style={{
           ...styles.button,
           backgroundColor: server == 0 ? "green" : server == 1 ? "#bab72e" : "red"
