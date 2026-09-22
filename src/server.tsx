@@ -8,7 +8,6 @@ const WEB_DIR = `${RNFS.DocumentDirectoryPath}/web`;
 
 async function copyWebFiles() {
   const exists = await RNFS.exists(WEB_DIR);
-
   if (exists) {
     return;
   }
@@ -70,8 +69,7 @@ export async function stopServer() {
     try {
       await server.stop()
     } catch (e) {
-      console.log(
-        "Failed to stop server:",e)
+      console.log("Failed to stop server:", e)
     }
     server = null
   }
