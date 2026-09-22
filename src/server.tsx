@@ -78,7 +78,6 @@ async function sendFile(socket:any, url:string) {
 }
 
 
-
 export async function startWebServer(port:number) {
   await copyWebFiles()
 
@@ -99,14 +98,14 @@ export async function startWebServer(port:number) {
           await sendFile(socket, url)
         }
       }
-    );
+    )
 
     socket.on("error", (err:any) => {
       console.log("SOCKET ERROR:", err)
     })
-  });
+  })
 
-  server.listen({ port, host:"0.0.0.0" }, () => {
+  server.listen({ port, host: "0.0.0.0" }, () => {
     console.log(`WEB SERVER STARTED ${port}`) 
   })
 
@@ -114,10 +113,8 @@ export async function startWebServer(port:number) {
 }
 
 
-export async function stopWebServer(){
+export async function stopWebServer() {
   if (server) {
-    await server.close(() => {
-      server = null
-    })
+    await server.close(() => { server = null })
   }
 }
