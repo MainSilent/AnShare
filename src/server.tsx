@@ -151,7 +151,7 @@ async function sendDownload(socket: any, url: string) {
 
   const CHUNK_SIZE = 64 * 1024 // 64KB
   let position = 0
-  
+
   console.log("STREAM START:", path, fileSize)
 
   try {
@@ -161,12 +161,7 @@ async function sendDownload(socket: any, url: string) {
         fileSize - position
       )
 
-      const base64 = await RNFS.read(
-        path,
-        length,
-        position,
-        "base64"
-      )
+      const base64 = await RNFS.read(path, length, position, "base64")
 
       const buffer = Buffer.from(base64, "base64")
       socket.write(buffer)
