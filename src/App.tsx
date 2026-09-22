@@ -31,6 +31,7 @@ function App() {
         'Internet not connected.',
         [{ text: 'OK' } ]
       )
+      setIpAddress("XXX.XXX.XXX.XXX")
       return false
     }
     setIpAddress(ip)
