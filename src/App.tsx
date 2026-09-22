@@ -12,6 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NetworkInfo } from 'react-native-network-info';
 
 import checkPermission from './Permission';
+import { startServer } from './server';
 import { isIPv4 } from './utils';
 
 let host
@@ -51,6 +52,19 @@ function App() {
       setServer(0)
       return false
     }
+
+    const host : any = await startServer()
+    if (host === false) {
+      Alert.alert(
+        'Error',
+        'Failed to start the server',
+        [{ text: 'OK' } ]
+      )
+      setServer(0)
+      return false
+    }
+
+    setServer(2)
   }
 
   return (
