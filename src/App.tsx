@@ -24,14 +24,19 @@ function App() {
 
 
   async function connect() {
+    if (server != 0)
+      return
+    setServer(1)
+
     const ip : any = await NetworkInfo.getIPAddress()
     if (!isIPv4(ip)) {
-        Alert.alert(
+      Alert.alert(
         'Error',
         'Internet not connected.',
         [{ text: 'OK' } ]
       )
       setIpAddress("XXX.XXX.XXX.XXX")
+      setServer(0)
       return false
     }
     setIpAddress(ip)
@@ -43,6 +48,7 @@ function App() {
         'Storage permission is required to access files.',
         [{ text: 'OK' } ]
       )
+      setServer(0)
       return false
     }
   }
