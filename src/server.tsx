@@ -2,6 +2,7 @@ import RNFS from 'react-native-fs';
 import { BridgeServer } from 'react-native-http-bridge-refurbished';
 
 
+let server : any = null
 const WEB_DIR = `${RNFS.DocumentDirectoryPath}/web`;
 
 
@@ -30,7 +31,7 @@ async function copyWebFiles() {
 export async function startWebServer(port:number) {
   await copyWebFiles();
 
-  const server = new BridgeServer('anshare', true);
+  server = new BridgeServer('anshare', true);
 
   server.get(
     '/',
@@ -61,4 +62,17 @@ export async function startWebServer(port:number) {
   server.listen(port);
 
   return server;
+}
+
+
+export async function stopServer() {
+  if (server !== null) {
+    try {
+      await server.stop()
+    } catch (e) {
+      console.log(
+        "Failed to stop server:",e)
+    }
+    server = null
+  }
 }

@@ -12,10 +12,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NetworkInfo } from 'react-native-network-info';
 
 import checkPermission from './Permission';
-import { startWebServer } from './server';
+import { startWebServer, stopServer } from './server';
 import { isIPv4 } from './utils';
 
-let host
 const PORT = 9630
 
 function App() {
@@ -65,7 +64,13 @@ function App() {
     }
 
     setServer(2)
-    setURL(`http://dsf.sdf`)
+    setURL(`http://${ip}:${PORT}`)
+  }
+
+  async function disconnect() {
+    setServer(1)
+    stopServer()
+    setServer(0)
   }
 
   return (
@@ -73,7 +78,7 @@ function App() {
       <StatusBar barStyle={'dark-content'} />
 
       <TouchableOpacity
-        onPress={() => connect()}
+        onPress={() => server === 0 ? connect() : disconnect()}
         style={{
           ...styles.button,
           backgroundColor: server == 0 ? "green" : server == 1 ? "#bab72e" : "red"
