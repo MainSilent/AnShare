@@ -34,7 +34,7 @@ function App() {
       </TouchableOpacity>
 
       <Text style={{...styles.ipText, marginTop: 40}}>Port: {PORT}</Text>
-      <Text style={styles.ipText}>IP: {isWifi ? details.ipAddress : "XXX.XXX.XXX.XXX"}</Text>
+      {/* <Text style={styles.ipText}>IP: {isWifi ? details.ipAddress : "XXX.XXX.XXX.XXX"}</Text> */}
 
       {isWifi && server == 2 &&
         <TouchableOpacity onPress={() => Linking.openURL(url)}>
