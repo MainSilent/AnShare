@@ -4,7 +4,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  Linking
+  Linking,
+  Alert
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -20,6 +21,14 @@ function App() {
 
   async function connect() {
     const perm = await checkPermission()
+    if (perm === false) {
+      Alert.alert(
+        'File Access Required',
+        'Storage permission is required to access files.',
+        [{ text: 'OK' } ]
+      )
+      return false
+    }
   }
 
   return (
