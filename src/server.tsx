@@ -54,7 +54,7 @@ export async function startWebServer(port:number) {
           'utf8'
         )
 
-      res.send(js)
+      res.html(js)
     }
   )
 
