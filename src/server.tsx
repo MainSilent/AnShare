@@ -29,6 +29,22 @@ function getMime(file:string) {
 }
 
 
+async function sendJson(socket: any, data: any, status = 200) {
+  const body = Buffer.from(JSON.stringify(data))
+
+  const header =
+    `HTTP/1.1 ${status} OK\r\n` +
+    "Content-Type: application/json\r\n" +
+    `Content-Length: ${body.length}\r\n` +
+    "Connection: close\r\n" +
+    "\r\n"
+
+  socket.write(header)
+
+  socket.write(body, () => socket.destroy())
+}
+
+
 async function sendFile(socket:any, url:string) {
   if (url === "/")
     url = "/index.html"
@@ -78,6 +94,30 @@ async function sendFile(socket:any, url:string) {
 }
 
 
+async function listDir(dirPath: string) {
+  const exists = await RNFS.exists(dirPath)
+  if (!exists) {
+    return {
+      error: "Directory does not exist",
+      path: dirPath
+    }
+  }
+
+  const items = await RNFS.readDir(dirPath)
+
+  return {
+    path: dirPath,
+
+    files: items.map(item => ({
+      name: item.name,
+      path: item.path,
+      type: item.isDirectory() ? "directory" : "file",
+      size: item.size
+    }))
+  }
+}
+
+
 export async function startWebServer(port:number) {
   await copyWebFiles()
 
@@ -94,6 +134,21 @@ export async function startWebServer(port:number) {
           const url = parts[1] || "/"
 
           console.log("REQUEST:", url)
+          
+          if (url.startsWith("/api/list")) {
+            const parsed = new URL(`http://localhost${url}`)
+            const path = parsed.searchParams.get("path")
+
+            if (!path) {
+              await sendJson(socket, { error: "Missing path parameter" }, 400)
+              return
+            }
+
+            const result = await listDir(path)
+            await sendJson(socket, result)
+
+            return
+          }
 
           await sendFile(socket, url)
         }
