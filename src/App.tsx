@@ -7,9 +7,12 @@ import {
   Linking,
   Alert
 } from 'react-native';
+
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NetworkInfo } from 'react-native-network-info';
 
 import checkPermission from './Permission';
+import { isIPv4 } from './utils';
 
 let host
 const PORT = 9630
@@ -17,9 +20,21 @@ const PORT = 9630
 function App() {
   const [url, setURL] = useState('')
   const [server, setServer] = useState(0)
-  const [ isWifi, setWifi ] = useState(false)
+  const [ipAddress, setIpAddress] = useState("XXX.XXX.XXX.XXX")
+
 
   async function connect() {
+    const ip : any = await NetworkInfo.getIPAddress()
+    if (!isIPv4(ip)) {
+        Alert.alert(
+        'Error',
+        'Internet not connected.',
+        [{ text: 'OK' } ]
+      )
+      return false
+    }
+    setIpAddress(ip)
+
     const perm = await checkPermission()
     if (perm === false) {
       Alert.alert(
@@ -48,9 +63,9 @@ function App() {
       </TouchableOpacity>
 
       <Text style={{...styles.ipText, marginTop: 40}}>Port: {PORT}</Text>
-      {/* <Text style={styles.ipText}>IP: {isWifi ? details.ipAddress : "XXX.XXX.XXX.XXX"}</Text> */}
+      <Text style={styles.ipText}>IP: {ipAddress}</Text>
 
-      {isWifi && server == 2 &&
+      {ipAddress && server == 2 &&
         <TouchableOpacity onPress={() => Linking.openURL(url)}>
           <Text style={{...styles.urlText}}>{url}</Text>
         </TouchableOpacity>
