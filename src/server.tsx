@@ -118,6 +118,70 @@ async function listDir(dirPath: string) {
 }
 
 
+async function sendDownload(socket: any, url: string) {
+  const parsed = new URL(`http://localhost${url}`)
+  const path = parsed.searchParams.get("path")
+
+  if (!path) {
+    await sendJson(socket, { error: "Missing path parameter" }, 400)
+    return
+  }
+
+  const exists = await RNFS.exists(path)
+
+  if (!exists) {
+    await sendJson(socket, { error: "File not found", path }, 404)
+    return
+  }
+
+  const stat = await RNFS.stat(path)
+  const fileSize = Number(stat.size)
+
+  const fileName = path.split("/").pop() || "download"
+
+  const header =
+    "HTTP/1.1 200 OK\r\n" +
+    "Content-Type: application/octet-stream\r\n" +
+    `Content-Length: ${fileSize}\r\n` +
+    `Content-Disposition: attachment; filename="${fileName}"\r\n` +
+    "Connection: close\r\n" +
+    "\r\n"
+
+  socket.write(header)
+
+  const CHUNK_SIZE = 64 * 1024 // 64KB
+  let position = 0
+  
+  console.log("STREAM START:", path, fileSize)
+
+  try {
+    while (position < fileSize) {
+      const length = Math.min(
+        CHUNK_SIZE,
+        fileSize - position
+      )
+
+      const base64 = await RNFS.read(
+        path,
+        length,
+        position,
+        "base64"
+      )
+
+      const buffer = Buffer.from(base64, "base64")
+      socket.write(buffer)
+      position += length
+    }
+
+    console.log("STREAM DONE:", path)
+  } catch (err) {
+    console.log("STREAM ERROR:", err)
+  }
+
+  socket.destroy()
+}
+
+
 export async function startWebServer(port:number) {
   await copyWebFiles()
 
@@ -134,7 +198,7 @@ export async function startWebServer(port:number) {
           const url = parts[1] || "/"
 
           console.log("REQUEST:", url)
-          
+
           if (url.startsWith("/api/list")) {
             const parsed = new URL(`http://localhost${url}`)
             const path = parsed.searchParams.get("path")
@@ -147,6 +211,11 @@ export async function startWebServer(port:number) {
             const result = await listDir(path)
             await sendJson(socket, result)
 
+            return
+          }
+
+          if (url.startsWith("/api/download")) {
+            await sendDownload(socket, url)
             return
           }
 
