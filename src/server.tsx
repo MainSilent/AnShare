@@ -114,9 +114,10 @@ export async function startWebServer(port:number) {
 }
 
 
-export function stopWebServer(){
+export async function stopWebServer(){
   if (server) {
-    server.close()
-    server = null
+    await server.close(() => {
+      server = null
+    })
   }
 }

@@ -12,7 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NetworkInfo } from 'react-native-network-info';
 
 import checkPermission from './Permission';
-import { startWebServer, stopServer } from './server';
+import { startWebServer, stopWebServer } from './server';
 import { isIPv4 } from './utils';
 
 const PORT = 9630
@@ -69,7 +69,7 @@ function App() {
 
   async function disconnect() {
     setServer(1)
-    stopServer()
+    stopWebServer()
     setServer(0)
   }
 
