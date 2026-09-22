@@ -65,6 +65,7 @@ function App() {
     }
 
     setServer(2)
+    setURL(`http://dsf.sdf`)
   }
 
   return (
