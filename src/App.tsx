@@ -12,7 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NetworkInfo } from 'react-native-network-info';
 
 import checkPermission from './Permission';
-import { startServer } from './server';
+import { startWebServer } from './server';
 import { isIPv4 } from './utils';
 
 let host
@@ -53,7 +53,7 @@ function App() {
       return false
     }
 
-    const host : any = await startServer()
+    const host : any = await startWebServer(PORT)
     if (host === false) {
       Alert.alert(
         'Error',
