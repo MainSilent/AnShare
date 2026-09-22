@@ -118,6 +118,24 @@ async function listDir(dirPath: string) {
 }
 
 
+async function receiveUpload(socket:any, url:string, body:Buffer) {
+  const parsed = new URL(`http://localhost${url}`)
+  const path = parsed.searchParams.get("path")
+
+  if (!path) {
+    await sendJson(socket, {error:"Missing path"} ,400)
+    return
+  }
+
+  await RNFS.writeFile(path, body.toString("base64"), "base64")
+
+  await sendJson(socket, {
+    ok:true,
+    path
+  })
+}
+
+
 async function sendDownload(socket: any, url: string) {
   const parsed = new URL(`http://localhost${url}`)
   const path = parsed.searchParams.get("path")
@@ -183,16 +201,32 @@ export async function startWebServer(port:number) {
   server = TcpSocket.createServer((socket:any) => {
     console.log("CLIENT CONNECTED")
     socket.setKeepAlive(true)
-    let request = ""
+    let uploadChunks : any[] = []
 
     socket.on("data", async (chunk:any) => {
-        request += chunk.toString()
-        if(request.includes("\r\n\r\n")){
-          const firstLine = request.split("\r\n")[0]
+      uploadChunks.push(Buffer.from(chunk))
+      const raw = Buffer.concat(uploadChunks)
+      const headerEnd = raw.indexOf("\r\n\r\n")
+
+      if(headerEnd !== -1){
+          const header = raw.slice(0, headerEnd).toString()
+          const firstLine = header.split("\r\n")[0]
           const parts = firstLine.split(" ")
+          const method = parts[0]
           const url = parts[1] || "/"
 
           console.log("REQUEST:", url)
+
+          const match = header.match(/Content-Length:\s*(\d+)/i)
+          const size = match ? Number(match[1]) : 0
+          const body = raw.slice(headerEnd + 4)
+
+          if(method === "POST" && url.startsWith("/api/upload")) {
+            if(body.length < size)
+              return
+            await receiveUpload(socket, url, body)
+            return
+          }
 
           if (url.startsWith("/api/list")) {
             const parsed = new URL(`http://localhost${url}`)
