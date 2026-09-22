@@ -8,41 +8,30 @@ const WEB_DIR = `${RNFS.DocumentDirectoryPath}/web`
 
 
 async function copyWebFiles() {
-  if (await RNFS.exists(WEB_DIR)) {
+  if (await RNFS.exists(WEB_DIR))
     return
-  }
   await RNFS.mkdir(WEB_DIR)
 
-  for(const file of [
-    "index.html",
-    "tailwind.js",
-  ]){
-    await RNFS.copyFileAssets(
-      `web/${file}`,
-      `${WEB_DIR}/${file}`
-    )
+  for(const file of ["index.html", "tailwind.js"]) {
+    await RNFS.copyFileAssets(`web/${file}`, `${WEB_DIR}/${file}`)
   }
 }
 
 
 function getMime(file:string) {
-  if(file.endsWith(".html")){
-    return "text/html";
-  }
-  if(file.endsWith(".js")){
-    return "application/javascript";
-  }
-  if(file.endsWith(".css")){
-    return "text/css";
-  }
-  return "application/octet-stream";
+  if (file.endsWith(".html"))
+    return "text/html"
+  if (file.endsWith(".js"))
+    return "application/javascript"
+  if (file.endsWith(".css"))
+    return "text/css"
+  return "application/octet-stream"
 }
 
 
-async function sendFile(socket:any, url:string ) {
-  if(url === "/"){
+async function sendFile(socket:any, url:string) {
+  if (url === "/")
     url = "/index.html"
-  }
 
   const file = `${WEB_DIR}${url}`
   console.log("FILE:", file)
@@ -75,7 +64,7 @@ async function sendFile(socket:any, url:string ) {
     `Content-Length: ${body.length}\r\n` +
     "Cache-Control: no-cache\r\n" +
     "Connection: close\r\n" +
-    "\r\n";
+    "\r\n"
 
   console.log("SEND:", file, body.length, "bytes")
 
@@ -91,16 +80,14 @@ async function sendFile(socket:any, url:string ) {
 
 
 export async function startWebServer(port:number) {
-  await copyWebFiles();
+  await copyWebFiles()
 
   server = TcpSocket.createServer((socket:any) => {
     console.log("CLIENT CONNECTED")
     socket.setKeepAlive(true)
     let request = ""
 
-    socket.on(
-      "data",
-      async(chunk:any)=>{
+    socket.on("data", async (chunk:any) => {
         request += chunk.toString()
         if(request.includes("\r\n\r\n")){
           const firstLine = request.split("\r\n")[0]
