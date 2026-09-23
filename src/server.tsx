@@ -8,13 +8,22 @@ const WEB_DIR = `${RNFS.DocumentDirectoryPath}/web`
 
 
 async function copyWebFiles() {
-  if (await RNFS.exists(WEB_DIR))
-    return
-  await RNFS.mkdir(WEB_DIR)
+    if (!(await RNFS.exists(WEB_DIR))) {
+        await RNFS.mkdir(WEB_DIR)
+    }
 
-  for(const file of ["index.html", "tailwind.js"]) {
-    await RNFS.copyFileAssets(`web/${file}`, `${WEB_DIR}/${file}`)
-  }
+    for (const file of ["index.html", "tailwind.js"]) {
+        const dest = `${WEB_DIR}/${file}`
+
+        if (await RNFS.exists(dest)) {
+            await RNFS.unlink(dest)
+        }
+
+        await RNFS.copyFileAssets(
+            `web/${file}`,
+            dest
+        )
+    }
 }
 
 
