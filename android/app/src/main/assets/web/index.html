@@ -37,18 +37,8 @@
 
             <!-- Path -->
             <div class="px-4 sm:px-6 py-3 border-b border-zinc-800 overflow-x-auto">
-                <div class="flex items-center gap-2 text-sm whitespace-nowrap text-zinc-400">
-                    <a class="hover:text-white">
-                        Home
-                    </a>
-                    <span>/</span>
-                    <a class="hover:text-white">
-                        Download
-                    </a>
-                    <span>/</span>
-                    <span class="text-white">
-                        Movies
-                    </span>
+                <div class="flex items-center gap-2 text-sm whitespace-nowrap text-zinc-400" id="breadcrumb">
+
                 </div>
             </div>
 
@@ -102,6 +92,7 @@
                 }
 
                 // Add parent folder as the first item
+                // For now i'm gonna show the .. to all dirs since it's also for rooted devices
                 if (currentPath !== "/storage/emulated/0") {
                     const parentPath = currentPath.replace(/\/[^/]+\/?$/, "") || "/";
 
@@ -255,6 +246,40 @@
 
         // Load when the page is ready.
         document.addEventListener("DOMContentLoaded", loadFiles);
+    </script>
+
+    <!-- THis is for BreadCrumb -->
+     <script>
+        function loadBreadcrumb(path) {
+            const root = "/storage/emulated/0";
+            path = path.replace(/\/+$/, "") || root;
+
+            const parts = path.slice(root.length).split("/").filter(Boolean);
+            const breadcrumb = document.getElementById("breadcrumb");
+
+            breadcrumb.innerHTML = `
+                <a href="?path=${encodeURIComponent(root)}" class="hover:text-white">
+                    Home
+                </a>
+            `;
+
+            let current = root;
+
+            parts.forEach((part, i) => {
+                current += "/" + part;
+
+                breadcrumb.innerHTML += `
+                    <span>/</span>
+                    <a href="?path=${encodeURIComponent(current)}"
+                    class="${i === parts.length - 1 ? "text-white" : "hover:text-white"}">
+                        ${escapeHtml(part)}
+                    </a>
+                `;
+            });
+        }
+
+        const params = new URLSearchParams(location.search);
+        loadBreadcrumb(params.get("path") || "/storage/emulated/0/");
     </script>
 </body>
 </html>
