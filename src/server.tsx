@@ -248,7 +248,8 @@ export async function startWebServer(port:number) {
             return
           }
 
-          await sendFile(socket, url)
+          const pathname = new URL(`http://localhost${url}`).pathname
+          await sendFile(socket, pathname)
         }
       }
     )
