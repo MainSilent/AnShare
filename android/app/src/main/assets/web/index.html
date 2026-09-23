@@ -101,6 +101,32 @@
                     return;
                 }
 
+                // Add parent folder as the first item
+                if (currentPath !== "/storage/emulated/0") {
+                    const parentPath = currentPath.replace(/\/[^/]+\/?$/, "") || "/";
+
+                    const parentElement = document.createElement("a");
+                    parentElement.href = "?path=" + encodeURIComponent(parentPath);
+                    parentElement.className =
+                        "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl p-4 transition group min-w-0";
+
+                    parentElement.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="text-3xl">↩️</span>
+                        </div>
+
+                        <h3 class="mt-4 font-medium truncate">
+                            ←
+                        </h3>
+
+                        <p class="text-xs text-zinc-500 mt-1">
+                            GoBack
+                        </p>
+                    `;
+
+                    container.appendChild(parentElement);
+                }
+
                 for (const item of data.files) {
                     const element = document.createElement("a");
 
@@ -121,10 +147,6 @@
                             <h3 class="mt-4 font-medium truncate">
                                 ${escapeHtml(item.name)}
                             </h3>
-
-                            <p class="text-xs text-zinc-500 mt-1">
-                                Folder
-                            </p>
                         `;
 
                     } else {
