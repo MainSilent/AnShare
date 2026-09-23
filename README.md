@@ -2,6 +2,8 @@
 Android File Sharing over Web
  
 > This Project is still in beta, There are lots of issues such as slow network speed and etc.
+>
+> Every release is built (with randomly generated license) and uploaded by the git action.
 
 </hr>
 
