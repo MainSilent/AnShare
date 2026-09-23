@@ -6,7 +6,7 @@ Android File Sharing over Web
 </hr>
 
 ## Demo
-![Web Screenshot](./images/screenshot_web.png)![App Screenshot](./images/screenshot_app.png)
+![Screenshot](./images/screenshot.png)
 
 </hr>
 
