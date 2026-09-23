@@ -6,7 +6,7 @@ Android File Sharing over Web
 </hr>
 
 ## Demo
-<img src="https://raw.githubusercontent.com/MainSilent/AnShare/refs/heads/master/images/screenshot_web.png"><img src="https://raw.githubusercontent.com/MainSilent/AnShare/refs/heads/master/images/screenshot_app.png">
+![Web Screenshot](./images/screenshot_web.png)![App Screenshot](./images/screenshot_app.png)
 
 </hr>
 
