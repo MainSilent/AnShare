@@ -21,17 +21,18 @@
                         </h1>
                     </div>
 
-                    <form action="/upload" method="post" enctype="multipart/form-data">
-                        <label class="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer bg-blue-600 hover:bg-blue-500 px-5 py-3 rounded-xl transition font-medium active:scale-95">
-                            <span>＋ Upload</span>
-                            <input 
-                                type="file" 
-                                name="file" 
-                                class="hidden" 
-                                onchange="this.form.submit()" 
-                            />
-                        </label>
-                    </form>
+                    <label
+                        class="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer bg-blue-600 hover:bg-blue-500 px-5 py-3 rounded-xl transition font-medium active:scale-95"
+                    >
+                        <span>＋ Upload</span>
+
+                        <input
+                            id="fileInput"
+                            type="file"
+                            class="hidden"
+                            onchange="uploadFile(this.files[0])"
+                        />
+                    </label>
                 </div>
             </div>
 
@@ -46,6 +47,67 @@
             <div class="p-4 sm:p-6 grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4" id="files">
 
             </div>
+        </div>
+    </div>
+
+    <!-- Upload Progress Modal -->
+    <div
+        id="uploadModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+    >
+        <div
+            class="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6"
+        >
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <h2 class="text-lg font-semibold">
+                        Uploading
+                    </h2>
+
+                    <p
+                        id="uploadFileName"
+                        class="text-sm text-zinc-500 mt-1 truncate"
+                    >
+                        File
+                    </p>
+                </div>
+
+                <span
+                    id="uploadPercent"
+                    class="text-sm font-medium text-zinc-300"
+                >
+                    0%
+                </span>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="w-full h-3 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                    id="uploadProgress"
+                    class="h-full bg-blue-600 rounded-full transition-all duration-200"
+                    style="width: 0%"
+                ></div>
+            </div>
+
+            <div class="flex justify-between mt-3 text-xs text-zinc-500">
+                <span id="uploadStatus">
+                    Preparing upload...
+                </span>
+
+                <span id="uploadSize">
+                    0 B / 0 B
+                </span>
+            </div>
+
+            <!-- Close button appears after upload -->
+            <button
+                id="uploadClose"
+                type="button"
+                onclick="closeUploadModal()"
+                class="hidden w-full mt-6 bg-zinc-800 hover:bg-zinc-700 px-4 py-3 rounded-xl transition"
+            >
+                Close
+            </button>
         </div>
     </div>
 
@@ -281,5 +343,126 @@
         const params = new URLSearchParams(location.search);
         loadBreadcrumb(params.get("path") || "/storage/emulated/0/");
     </script>
+
+    <!-- THis is for upload -->
+     <script>
+        function uploadFile(file) {
+            if (!file) return;
+
+            const params = new URLSearchParams(window.location.search);
+
+            const currentPath =
+                params.get("path") || "/storage/emulated/0";
+
+            const cleanPath = currentPath.replace(/\/+$/, "");
+
+            const filePath = cleanPath + "/" + file.name;
+
+            const modal = document.getElementById("uploadModal");
+            const progress = document.getElementById("uploadProgress");
+            const percent = document.getElementById("uploadPercent");
+            const fileName = document.getElementById("uploadFileName");
+            const status = document.getElementById("uploadStatus");
+            const size = document.getElementById("uploadSize");
+            const closeButton = document.getElementById("uploadClose");
+
+            // Reset modal
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+
+            progress.style.width = "0%";
+            percent.textContent = "0%";
+            fileName.textContent = file.name;
+            status.textContent = "Starting upload...";
+            size.textContent = "0 B / " + formatSize(file.size);
+
+            closeButton.classList.add("hidden");
+
+            const xhr = new XMLHttpRequest();
+
+            xhr.open(
+                "POST",
+                "/api/upload?path=" + encodeURIComponent(filePath)
+            );
+
+            xhr.setRequestHeader(
+                "Content-Type",
+                "application/octet-stream"
+            );
+
+            // Upload progress
+            xhr.upload.addEventListener("progress", function (event) {
+                if (!event.lengthComputable) {
+                    return;
+                }
+
+                const percentValue =
+                    Math.round((event.loaded / event.total) * 100);
+
+                progress.style.width = percentValue + "%";
+                percent.textContent = percentValue + "%";
+
+                size.textContent =
+                    formatSize(event.loaded) +
+                    " / " +
+                    formatSize(event.total);
+
+                if (percentValue < 100) {
+                    status.textContent = "Uploading...";
+                } else {
+                    status.textContent = "Finishing...";
+                }
+            });
+
+            xhr.addEventListener("load", async function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    progress.style.width = "100%";
+                    percent.textContent = "100%";
+                    status.textContent = "Upload complete";
+                    size.textContent =
+                        formatSize(file.size) +
+                        " / " +
+                        formatSize(file.size);
+
+                    closeButton.classList.remove("hidden");
+
+                    // Refresh directory
+                    await loadFiles();
+
+                } else {
+                    status.textContent =
+                        "Upload failed (HTTP " + xhr.status + ")";
+
+                    closeButton.classList.remove("hidden");
+                }
+            });
+
+            xhr.addEventListener("error", function () {
+                status.textContent = "Upload failed — connection error";
+                closeButton.classList.remove("hidden");
+            });
+
+            xhr.addEventListener("abort", function () {
+                status.textContent = "Upload cancelled";
+                closeButton.classList.remove("hidden");
+            });
+
+            xhr.send(file);
+        }
+
+        function closeUploadModal() {
+            const modal = document.getElementById("uploadModal");
+
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+
+            // Reset file input
+            const input = document.getElementById("fileInput");
+
+            if (input) {
+                input.value = "";
+            }
+        }
+     </script>
 </body>
 </html>
