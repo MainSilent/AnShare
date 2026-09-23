@@ -248,6 +248,18 @@ export async function startWebServer(port:number) {
             return
           }
 
+          if (url === "/") {
+            socket.write(
+              "HTTP/1.1 302 Found\r\n" +
+              "Location: /?path=%2Fstorage%2Femulated%2F0\r\n" +
+              "Content-Length: 0\r\n" +
+              "Connection: close\r\n" +
+              "\r\n"
+            );
+            socket.destroy();
+            return;
+          }
+
           const pathname = new URL(`http://localhost${url}`).pathname
           await sendFile(socket, pathname)
         }
